@@ -25,7 +25,7 @@
         <ul class="lists"></ul>
       </div>
     </div>
-    <script src="../../common/js/jquery.js"></script>
+    <script src="../../common/js/jquery.js" type="text/javascript" src="jquery.pagination.js"></script>
     <script>
       // 楽天ブックスの総合検索APIを使って製作してください。
       // answerの挙動を良く見てね！
@@ -86,6 +86,144 @@
       //     <a class="btn-item" data-js="page-next" href="">次へ</a>
       //   </div>
       // </div>
+
+
+      $(function() {
+        let pageNum = '';
+        let prevWord = '';
+        let searchWord = '';
+        $('.search__btn').on('click', function() {
+          console.log(searchWord);
+          console.log(prevWord);
+          if(prevWord !== searchWord) {
+            pageNum = 1;
+            prevWord = searchWord;
+            getItem(prevWord);
+          } else if(prevWord === searchWord) {
+            pageNum = 1;
+            getItem(pageNum);
+          };
+        });
+
+        function getItem (data, pageNum) {
+          $('ul,.message,.pager').empty();
+          searchWord = $('.search__text__input').val();
+          console.log(searchWord);
+          $.ajax({
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+            type: 'GET',
+            datatype: 'json',
+            data: {
+              applicationId: '1019399324990976605',
+              booksGenreId: '001',
+              hits: '20',
+              page: pageNum,
+              keyword: searchWord,
+              timeout: 10000
+            },
+          }).done(function (data, index) {
+            let pageAll = data.pageCount;
+            console.log(pageAll);
+            console.log(pageNum);
+            ajaxSuccess(data, index);
+            makePager(data, data.page, pageAll);
+            clickAtag();
+          }).fail(function (jqXHR, textStatus, errorThrown ) {
+            ajaxError(jqXHR, textStatus, errorThrown);
+          });
+        };  
+        
+        function ajaxSuccess (data, index) {
+          let list = '';
+          let itemAll = data.count;
+          console.log(data.Items);
+          console.log(data.page);
+          console.log(itemAll);
+          if(itemAll > 0) {
+            $.each(data.Items, function (index, items) {
+              list = '<li class="lists__item">'+
+                     '<div class="lists__item__inner">'+
+                     '<a href="' + data.Items[index].Item.itemUrl + '" class="lists__item__link"'+ ' target="_blank">'+ 
+                     '<img src="'+ data.Items[index].Item.mediumImageUrl +'" class="lists__item__img"'+ ' alt=商品画像'+ '>'+
+                     '<p class="'+ 'lists__item__detail'+ '">作品名：'+ data.Items[index].Item.title + '</p>'+
+                     '<p class="'+ 'lists__item__detail'+ '">作者　：'+ data.Items[index].Item.author + '</p>'+
+                     '<p class="'+ 'lists__item__detail'+ '">出版社：'+ data.Items[index].Item.publisherName + '</p>'+
+                     '</a>'+
+                     '</div>'+ 
+                     '</li>';
+              $('.lists').prepend(list);
+            });
+          } else if (itemAll === 0) {
+            const alert = '<p>検索結果が見つかりませんでした。</p>'+
+                          '<p>別のキーワードで検索して下さい。</p>';
+            $('.message').append(alert);
+          } else {
+            
+          };
+        };  
+
+        function ajaxError(jqXHR, textStatus, errorThrown) { 
+          console.log('jqXHR          : ' + jqXHR.status); // HTTPステータスが取得
+          console.log('textStatus     : ' + textStatus);    // タイムアウト、パースエラー
+          console.log('errorThrown    : ' + errorThrown.message); // 例外情報
+          if (jqXHR.status === 400) {
+              $('.message').html('<p>検索文字が入力されていません。</p>');
+          } else if (jqXHR.status === 429) {
+              $('.message').html('<p>リクエスト過多です。しばらく時間を置いてからお試しください。</p>')
+          } else if (jqXHR.status === 500) {
+              $('.messsage').html('<p>サーバーの内部エラーです。</p>');
+          } else {
+            $('.messsage').html('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
+          };
+        };
+
+        function clickAtag () {
+          document.addEventListener('click', function(e) {
+            e.preventDefault();
+          }, {passive: false });
+        };
+    
+        function makePager (data, counterCurrent, counterAll) {
+          const pagerList = $('<div class="pager" data-js="pager">' +'<div class="counter">' +
+                            '<span class="counter-current">' + counterCurrent + '</span>/<span class="counter-all">' +
+                             counterAll+ '</span>' + '</div>' + '<div class="btn-wrapper">' +
+                            '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+                            '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+                            '</div>' + '</div>');
+          $('ul').after(pagerList);
+          let lastPageNum = data.pageCount;
+          console.log(counterCurrent);
+          console.log(counterAll);
+          console.log(lastPageNum);
+          pushBtn(data);
+          btnStyle(data);
+        };
+        
+        function pushBtn(data) {
+          let prev = data.page - 1;
+          let next = data.page + 1
+          console.log(prev);
+          console.log(next);
+          $('.btn-item:first').on('click', function() {
+            getItem(data, prev);
+          });
+          $('.btn-item:last').on('click', function() {
+            getItem(data, next);
+          });  
+        };
+
+        function btnStyle(data) {
+          if (data.page === 1) {
+            if(data.pageCount === 1) {
+            $('.btn-item').addClass('disabled');
+            } else {
+              $('.btn-item:first').addClass('disabled');
+            }
+          } else if (data.page === data.pageCount) {
+            $('.btn-item:last').addClass('disabled');
+          };
+        };     
+      });       
     </script>
   </body>
 </html>
