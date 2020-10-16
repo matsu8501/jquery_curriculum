@@ -98,39 +98,33 @@
         });
 
         function getItem (data, pageNum) {
-          $('ul,.message').empty();
+          $('.lists,.message').empty();
           $('.pager').remove();
-          if (window.navigator.onLine) {
-            console.log('online');
-            $.ajax({
-              url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-              type: 'GET',
-              datatype: 'json',
-              data: {
-                applicationId: '1019399324990976605',
-                booksGenreId: '001',
-                hits: '20',
-                page: pageNum,
-                keyword: searchWord,
-              },
-            }).done(function (data) {
-              var pageAll = data.pageCount;
-              console.log(pageAll);
-              console.log(pageNum);
-              if(data.count > 0) {
-                ajaxSuccess(data);
-                makePager(data, data.page, pageAll);
-                clickAtag();
-              } else {
-                notItems();
-              };  
-            }).fail(function (jqXHR, textStatus, errorThrown ) {
-              ajaxError(jqXHR, textStatus, errorThrown);
-            });  
-          } else {
-            console.log('offline');
-            $('.message').html('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
-          };
+          $.ajax({
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+            type: 'GET',
+            datatype: 'json',
+            data: {
+              applicationId: '1019399324990976605',
+              booksGenreId: '001',
+              hits: '20',
+              page: pageNum,
+              keyword: searchWord,
+            },
+          }).done(function (data) {
+            var pageAll = data.pageCount;
+            console.log(pageAll);
+            console.log(pageNum);
+            if(data.count > 0) {
+              ajaxSuccess(data);
+              makePager(data, data.page, pageAll);
+              clickAtag ();
+            } else {
+              notItems();
+            };  
+          }).fail(function (jqXHR, textStatus, errorThrown ) {
+            ajaxError(jqXHR, textStatus, errorThrown);
+          });  
         };
 
         function ajaxSuccess (data) {
@@ -141,15 +135,15 @@
           console.log(itemAll);
           $.each(data.Items, function (index, element) {
             list += '<li class="lists__item">'+
-                   '<div class="lists__item__inner">'+
-                   '<a href="' + data.Items[index].Item.itemUrl + '" class="lists__item__link"'+ ' target="_blank">'+ 
-                   '<img src="'+ data.Items[index].Item.mediumImageUrl +'" class="lists__item__img"'+ ' alt=商品画像'+ '>'+
-                   '<p class="'+ 'lists__item__detail'+ '">作品名：'+ data.Items[index].Item.title + '</p>'+
-                   '<p class="'+ 'lists__item__detail'+ '">作者　：'+ data.Items[index].Item.author + '</p>'+
-                   '<p class="'+ 'lists__item__detail'+ '">出版社：'+ data.Items[index].Item.publisherName + '</p>'+
-                   '</a>'+
-                   '</div>'+ 
-                   '</li>';  
+                      '<div class="lists__item__inner">'+
+                        '<a href="' + data.Items[index].Item.itemUrl + '" class="lists__item__link"'+ ' target="_blank">'+ 
+                          '<img src="'+ data.Items[index].Item.mediumImageUrl +'" class="lists__item__img"'+ ' alt=商品画像'+ '>'+
+                          '<p class="'+ 'lists__item__detail'+ '">作品名：'+ data.Items[index].Item.title + '</p>'+
+                          '<p class="'+ 'lists__item__detail'+ '">作者　：'+ data.Items[index].Item.author + '</p>'+
+                          '<p class="'+ 'lists__item__detail'+ '">出版社：'+ data.Items[index].Item.publisherName + '</p>'+
+                        '</a>'+
+                      '</div>'+ 
+                    '</li>';  
           }); 
           $('.lists').html(list);
         };  
@@ -161,18 +155,21 @@
         }; 
 
         function ajaxError(jqXHR, textStatus, errorThrown) { 
-          console.log('jqXHR          : ' , jqXHR.status); // HTTPステータス
-          console.log('textStatus     : ' , textStatus);    // タイムアウト、パースエラー
-          console.log('errorThrown    : ' , errorThrown.message); // 例外情報
+          console.log('jqXHR          : ' , jqXHR.status);
+          console.log('textStatus     : ' , textStatus);
+          console.log('errorThrown    : ' , errorThrown.message); 
           switch (jqXHR.status) {
+            case 0:
+              $('.message').html('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
+              break;
             case 400:
-                $('.message').html('<p>検索文字が入力されていません。</p>');
+              $('.message').html('<p>検索文字が入力されていません。</p>');
               break;
             case 429:
-                $('.message').html('<p>リクエスト過多です。しばらく時間を置いてからお試しください。</p>');
+              $('.message').html('<p>リクエスト過多です。しばらく時間を置いてからお試しください。</p>');
               break;
             default:
-              break;  
+
           };
         };  
 
@@ -183,12 +180,15 @@
         };
         
         function makePager (data, counterCurrent, counterAll) {
-          var pagerList = $('<div class="pager" data-js="pager">' +'<div class="counter">' +
-                            '<span class="counter-current">' + counterCurrent + '</span>/<span class="counter-all">' +
-                             counterAll + '</span>' + '</div>' + '<div class="btn-wrapper">' +
-                            '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
-                            '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
-                            '</div>' + '</div>');
+          var pagerList = $('<div class="pager" data-js="pager">' +
+                              '<div class="counter">' +
+                                '<span class="counter-current">' + counterCurrent + '</span>/<span class="counter-all">' + counterAll + '</span>' +
+                              '</div>' + 
+                              '<div class="btn-wrapper">' +
+                                '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+                                '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+                              '</div>' + 
+                            '</div>');
           $('ul').after(pagerList);
           var lastPageNum = data.pageCount;
           console.log(counterCurrent);
@@ -203,28 +203,32 @@
           var next = data.page + 1
           console.log(prev);
           console.log(next);
-          $('.btn-item:first').on('click', function() {
+          $('.btn-item').first().on('click', function(e) {
+            if (data.page === 1) {
+              e.preventDefault();
+              return;
+            };
             getItem(data, prev);
           });
-          $('.btn-item:last').on('click', function() {
+          $('.btn-item').last().on('click', function(e) {
+            if(data.page === data.pageCount) {
+              e.preventDefault();
+              return;
+            }
             getItem(data, next);
           });  
         };
 
         function btnStyle(data) {
-          if (data.page === 1) {
-            if(data.pageCount === 1) {
-              $('.btn-item').addClass('disabled')
-                            .css('pointer-events','none');
-            } else {
-              $('.btn-item:first').addClass('disabled')
-                                  .css('pointer-events','none');
-            }
-          } else if (data.page === data.pageCount) {
-            $('.btn-item:last').addClass('disabled')
-                               .css('pointer-events','none');
-          };
-        };     
+          if (data.page === 1 && data.pageCount === 1) {
+            $('.btn-item').addClass('disabled');
+          } else if(data.page === 1 && data.pageCount !== 1) {
+            $('.btn-item').first().addClass('disabled');
+          }
+          if (data.page === data.pageCount) {
+            $('.btn-item').last().addClass('disabled');
+          }
+        }; 
       }); 
     </script>
   </body>
