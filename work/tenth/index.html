@@ -203,14 +203,14 @@
           var next = data.page + 1
           console.log(prev);
           console.log(next);
-          $('.btn-item').first().on('click', function(e) {
+          $('a[data-js= "page-prev"]').on('click', function(e) {
             if (data.page === 1) {
               e.preventDefault();
               return;
             };
             getItem(data, prev);
           });
-          $('.btn-item').last().on('click', function(e) {
+          $('a[data-js= "page-next"]').on('click', function(e) {
             if(data.page === data.pageCount) {
               e.preventDefault();
               return;
@@ -223,10 +223,10 @@
           if (data.page === 1 && data.pageCount === 1) {
             $('.btn-item').addClass('disabled');
           } else if(data.page === 1 && data.pageCount !== 1) {
-            $('.btn-item').first().addClass('disabled');
+            $('a[data-js= "page-prev"]').addClass('disabled');
           }
           if (data.page === data.pageCount) {
-            $('.btn-item').last().addClass('disabled');
+            $('a[data-js= "page-next"]').addClass('disabled');
           }
         }; 
       }); 
