@@ -91,14 +91,27 @@
       $(function() {
         var searchWord = '';
         var pageNum = null;
-        $('.search__btn').on('click', function() {
-          searchWord = $('.search__text__input').val();
+        var response = null;
+        $('button[data-js="search-btn"]').on('click', function() {
+          searchWord = $('input[data-js="search-word"]').val();
           console.log(searchWord);
-          getItem(searchWord);
+          pageNum = 1;
+          getItem(searchWord, pageNum); 
+        });  
+        console.log(response);
+        $('a[data-js= "page-prev"]').on('click', function() {
+          var prev = response.page - 1;
+          console.log(prev);
+          getItem(searchWord, prev);
+        });
+        $('a[data-js= "page-next"]').on('click', function() {
+          var next =  response.page + 1;
+          console.log(next);
+          getItem(searchWord, next);
         });
 
-        function getItem (data, pageNum) {
-          $('.lists,.message').empty();
+        function getItem (searchWord, pageNumber) {
+          $('.lists,.message').empty(); 
           $('.pager').remove();
           $.ajax({
             url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
@@ -108,39 +121,36 @@
               applicationId: '1019399324990976605',
               booksGenreId: '001',
               hits: '20',
-              page: pageNum,
+              page: pageNumber,
               keyword: searchWord,
             },
           }).done(function (data) {
-            var pageAll = data.pageCount;
-            console.log(pageAll);
-            console.log(pageNum);
+            response = data;
+            console.log(data.pageCount);
             if(data.count > 0) {
               ajaxSuccess(data);
-              makePager(data, data.page, pageAll);
-              clickAtag ();
+              makePager(data, data.page, data.pageCount);
             } else {
               notItems();
             };  
-          }).fail(function (jqXHR, textStatus, errorThrown ) {
-            ajaxError(jqXHR, textStatus, errorThrown);
+          }).fail(function (error) {
+            ajaxError(error);
           });  
+          return response;           
         };
 
         function ajaxSuccess (data) {
           var list = '';
-          var itemAll = data.count;
           console.log(data.Items);
           console.log(data.page);
-          console.log(itemAll);
           $.each(data.Items, function (index, element) {
             list += '<li class="lists__item">'+
                       '<div class="lists__item__inner">'+
-                        '<a href="' + data.Items[index].Item.itemUrl + '" class="lists__item__link"'+ ' target="_blank">'+ 
-                          '<img src="'+ data.Items[index].Item.mediumImageUrl +'" class="lists__item__img"'+ ' alt=商品画像'+ '>'+
-                          '<p class="'+ 'lists__item__detail'+ '">作品名：'+ data.Items[index].Item.title + '</p>'+
-                          '<p class="'+ 'lists__item__detail'+ '">作者　：'+ data.Items[index].Item.author + '</p>'+
-                          '<p class="'+ 'lists__item__detail'+ '">出版社：'+ data.Items[index].Item.publisherName + '</p>'+
+                        '<a href="' + element.Item.itemUrl + '" class="lists__item__link"'+ ' target="_blank">'+ 
+                          '<img src="'+ element.Item.mediumImageUrl +'" class="lists__item__img"'+ ' alt= 商品画像'+ '>'+
+                          '<p class="'+ 'lists__item__detail'+ '">作品名：'+ element.Item.title + '</p>'+
+                          '<p class="'+ 'lists__item__detail'+ '">作者　：'+ element.Item.author + '</p>'+
+                          '<p class="'+ 'lists__item__detail'+ '">出版社：'+ element.Item.publisherName + '</p>'+
                         '</a>'+
                       '</div>'+ 
                     '</li>';  
@@ -151,34 +161,34 @@
         function notItems () {
           var alert = '<p>検索結果が見つかりませんでした。</p>'+
                       '<p>別のキーワードで検索して下さい。</p>';
-          $('.message').append(alert);
+          $('.message').html(alert);
         }; 
 
-        function ajaxError(jqXHR, textStatus, errorThrown) { 
-          console.log('jqXHR          : ' , jqXHR.status);
-          console.log('textStatus     : ' , textStatus);
-          console.log('errorThrown    : ' , errorThrown.message); 
-          switch (jqXHR.status) {
+        function ajaxError(error) { 
+          var errorMessage = '';
+          console.log(error);
+          switch (error.status) {
             case 0:
-              $('.message').html('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
+              errorMessage = '通信に失敗しました。インターネットの接続をご確認ください。';
               break;
             case 400:
-              $('.message').html('<p>検索文字が入力されていません。</p>');
+              errorMessage = '検索文字が入力されていません。';
               break;
             case 429:
-              $('.message').html('<p>リクエスト過多です。しばらく時間を置いてからお試しください。</p>');
+              errorMessage = 'リクエスト過多です。しばらく時間を置いてからお試しください。'
               break;
             default:
-
+              errorMessage = '何らかのエラーが発生しています。';
           };
-        };  
-
+          $('.message').html('<p>' + errorMessage + '</p>');
+        };
+        /*
         function clickAtag () {
           document.addEventListener('click', function(e) {
             e.preventDefault();
           }, {passive: false });
         };
-        
+        */
         function makePager (data, counterCurrent, counterAll) {
           var pagerList = $('<div class="pager" data-js="pager">' +
                               '<div class="counter">' +
@@ -190,14 +200,12 @@
                               '</div>' + 
                             '</div>');
           $('ul').after(pagerList);
-          var lastPageNum = data.pageCount;
           console.log(counterCurrent);
           console.log(counterAll);
-          console.log(lastPageNum);
-          pushBtn(data);
+          console.log(data.pageCount);
           btnStyle(data);
         };
-        
+        /*
         function pushBtn(data) {
           var prev = data.page - 1;
           var next = data.page + 1
@@ -208,21 +216,22 @@
               e.preventDefault();
               return;
             };
-            getItem(data, prev);
+            getItem(searchWord, prev);
           });
           $('a[data-js= "page-next"]').on('click', function(e) {
             if(data.page === data.pageCount) {
               e.preventDefault();
               return;
             }
-            getItem(data, next);
+            getItem(searchWord, next);
           });  
         };
-
+        */
         function btnStyle(data) {
           if (data.page === 1 && data.pageCount === 1) {
             $('.btn-item').addClass('disabled');
-          } else if(data.page === 1 && data.pageCount !== 1) {
+          } 
+          if (data.page === 1 && data.pageCount !== 1) {
             $('a[data-js= "page-prev"]').addClass('disabled');
           }
           if (data.page === data.pageCount) {
