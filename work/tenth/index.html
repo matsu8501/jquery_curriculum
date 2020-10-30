@@ -89,29 +89,37 @@
 
 
       $(function() {
-        var searchWord = '';
         var pageNum = null;
-        var response = null;
+        var next = null;
+        var prev = null;
+        var currentPage = null;
+        var maxPage = null;
         $('button[data-js="search-btn"]').on('click', function() {
-          searchWord = $('input[data-js="search-word"]').val();
-          console.log(searchWord);
           pageNum = 1;
-          getItem(searchWord, pageNum); 
-        });  
-        console.log(response);
-        $('a[data-js= "page-prev"]').on('click', function() {
-          var prev = response.page - 1;
-          console.log(prev);
-          getItem(searchWord, prev);
+          console.log(pageNum);
+          getItem(pageNum);
         });
-        $('a[data-js= "page-next"]').on('click', function() {
-          var next =  response.page + 1;
-          console.log(next);
-          getItem(searchWord, next);
+        $(document).on('click', 'a[data-js= "page-next"]', function(e) {
+          next = currentPage + 1;
+          if(currentPage === maxPage) {
+            e.preventDefault();
+            return;
+          }
+          getItem(next);
         });
-
-        function getItem (searchWord, pageNumber) {
-          $('.lists,.message').empty(); 
+        $(document).on('click', 'a[data-js= "page-prev"]', function(e) {
+          prev = currentPage - 1;
+          if(prev === 0){
+            e.preventDefault();
+            return;
+          }
+          getItem(prev);
+        });
+       
+        function getItem (number) {
+          var searchWord = $('input[data-js="search-word"]').val();
+          console.log(searchWord);
+          $('.lists, .message').empty(); 
           $('.pager').remove();
           $.ajax({
             url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
@@ -121,28 +129,33 @@
               applicationId: '1019399324990976605',
               booksGenreId: '001',
               hits: '20',
-              page: pageNumber,
+              page: number,
               keyword: searchWord,
             },
           }).done(function (data) {
-            response = data;
-            console.log(data.pageCount);
             if(data.count > 0) {
+              currentPage = data.page;
+              maxPage = data.pageCount;
+              makePager(data);
               ajaxSuccess(data);
-              makePager(data, data.page, data.pageCount);
+              console.log(data);
+              console.log(currentPage);
+              console.log(maxPage);
+              console.log(data.count);
+              return [currentPage, maxPage];
             } else {
               notItems();
-            };  
+            }
           }).fail(function (error) {
-            ajaxError(error);
-          });  
-          return response;           
+              ajaxError(error);
+          });
         };
 
         function ajaxSuccess (data) {
+          document.addEventListener('click', function(e) {
+            e.preventDefault();
+          }, {passive: false });
           var list = '';
-          console.log(data.Items);
-          console.log(data.page);
           $.each(data.Items, function (index, element) {
             list += '<li class="lists__item">'+
                       '<div class="lists__item__inner">'+
@@ -182,14 +195,10 @@
           };
           $('.message').html('<p>' + errorMessage + '</p>');
         };
-        /*
-        function clickAtag () {
-          document.addEventListener('click', function(e) {
-            e.preventDefault();
-          }, {passive: false });
-        };
-        */
-        function makePager (data, counterCurrent, counterAll) {
+        
+        function makePager (data) {
+          var counterCurrent = data.page;
+          var counterAll = data.pageCount;
           var pagerList = $('<div class="pager" data-js="pager">' +
                               '<div class="counter">' +
                                 '<span class="counter-current">' + counterCurrent + '</span>/<span class="counter-all">' + counterAll + '</span>' +
@@ -202,42 +211,18 @@
           $('ul').after(pagerList);
           console.log(counterCurrent);
           console.log(counterAll);
-          console.log(data.pageCount);
           btnStyle(data);
         };
-        /*
-        function pushBtn(data) {
-          var prev = data.page - 1;
-          var next = data.page + 1
-          console.log(prev);
-          console.log(next);
-          $('a[data-js= "page-prev"]').on('click', function(e) {
-            if (data.page === 1) {
-              e.preventDefault();
-              return;
-            };
-            getItem(searchWord, prev);
-          });
-          $('a[data-js= "page-next"]').on('click', function(e) {
-            if(data.page === data.pageCount) {
-              e.preventDefault();
-              return;
-            }
-            getItem(searchWord, next);
-          });  
-        };
-        */
+
         function btnStyle(data) {
-          if (data.page === 1 && data.pageCount === 1) {
-            $('.btn-item').addClass('disabled');
-          } 
-          if (data.page === 1 && data.pageCount !== 1) {
+          var prevPage = data.page - 1;
+          if (prevPage === 0) {
             $('a[data-js= "page-prev"]').addClass('disabled');
           }
           if (data.page === data.pageCount) {
             $('a[data-js= "page-next"]').addClass('disabled');
           }
-        }; 
+        };  
       }); 
     </script>
   </body>
